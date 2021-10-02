@@ -80,21 +80,21 @@ def cross_categories(df):
     """ Auxillary func for Sock Puppet Distance Calculation"""
     a = list(df['category_id'].unique())
     b = list(df['category_id'].unique())
-    index = pd.MultiIndex.from_product([a, b], names = ["user1", "user2"])
+    index = pd.MultiIndex.from_product([a, b], names = ["category1", "category2"])
     return pd.DataFrame(index = index).reset_index()
 
 def SPD(klds, cc):
     """ Calculates the L1 distance between every pair of categories in the domain (Sock Puppet Distance)"""
     spd = cc.copy()
-    spd['distance_between_users'] = 0
+    spd['distance_between_categories'] = 0
 
-    ## This code can be made more efficient by not calculating twice when user1 and user2 are interchanged, using the other masks
+    ## This code can be made more efficient by not calculating twice when category1 and category2 are interchanged, using the other masks
     for i in range(len(cc)):
-        user1 = cc.iloc[i,0]
-        user2 = cc.iloc[i,1]
+        category1 = cc.iloc[i,0]
+        category2 = cc.iloc[i,1]
 
-        mask1 = klds['category_id'] == user1
-        mask2 = klds['category_id'] == user2
+        mask1 = klds['category_id'] == category1
+        mask2 = klds['category_id'] == category2
         x = klds[mask1 | mask2]
 
         x = x.pivot(index='category_id', columns='element', values='KLR')
@@ -104,16 +104,16 @@ def SPD(klds, cc):
         vec_a = np.array(x.fillna(0).iloc[0,:])
         vec_b = np.array(x.fillna(0).iloc[-1,:])
 
-        spd_mask1 = spd['user1'] == user1
-        spd_mask2 = spd['user1'] == user2
-        spd_mask3 = spd['user2'] == user1
-        spd_mask4 = spd['user2'] == user2
+        spd_mask1 = spd['category1'] == category1
+        spd_mask2 = spd['category1'] == category2
+        spd_mask3 = spd['category2'] == category1
+        spd_mask4 = spd['category2'] == category2
 
-        spd.loc[spd[(spd_mask1  & spd_mask4)].index[0],'distance_between_users'] = distance.cityblock(vec_a,vec_b)/csize
+        spd.loc[spd[(spd_mask1  & spd_mask4)].index[0],'distance_between_categories'] = distance.cityblock(vec_a,vec_b)/csize
 
-    f_max = round(max(spd['distance_between_users']) + 0.005,3)
+    f_max = round(max(spd['distance_between_categories']) + 0.005,3)
     if f_max > 1:
-        spd['distance_between_users'] = spd['distance_between_users'] / f_max
+        spd['distance_between_categories'] = spd['distance_between_categories'] / f_max
     return spd
 
 def SockPuppetDistance(signatures, df):
